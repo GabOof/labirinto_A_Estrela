@@ -1,5 +1,6 @@
 import copy
 import math
+from tkinter import *
 
 
 class Node:
@@ -147,3 +148,60 @@ if final.indiceX != -1:
     print(f"Caminho: {caminho_completo}")
 else:
     print("Caminho não encontrado.")
+
+
+# Classe responsável pela interface visual utilizando o tkinter
+# (https://www.devmedia.com.br/tkinter-interfaces-graficas-em-python/33956)
+# (https://www-codingal-com.translate.goog/coding-for-kids/blog/build-gui-games-in-python/?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt&_x_tr_pto=tc)
+# (https://github.com/OtavianoSilva/minesweeper_python)
+
+
+class Labirinto:
+    def __init__(self, master=None):
+        # Cria o frame principal para o título
+        self.widget1 = Frame(master)
+        self.widget1.pack()
+        # Escreve o título
+        self.titulo = Label(self.widget1, text="Execução do Jogo")
+        self.titulo.pack()
+
+        # Cria labirinto de acordo com a lista do labirinto definida anteriormente
+        self.labirinto = Frame(master)
+        self.labirinto.pack()
+        cores = {
+            "C": "#A8E6CF",  # Começo
+            "S": "#FF8B94",  # Saída
+            "A": "#AECBFA",  # Semi-barreira
+            "F": "#FFFACD",  # Poder
+            "B": "#6A6A6A",  # Barreira
+            "_": "#FFFFFF",  # Caminho livre
+        }
+
+        for i, quadrado in enumerate(labirinto):
+            for j, quadrado in enumerate(quadrado):
+                cor = cores.get(quadrado, "white")  # Define a cor padrão como branco
+
+                # Cria o label para cada quadrado do labirinto
+                label = Label(
+                    self.labirinto,
+                    text=(
+                        " " if quadrado == "_" else quadrado
+                    ),  # Mostra espaço em branco para "_",
+                    fg="black",  # Cor do texto
+                    width=8,
+                    height=4,
+                    bg=cor,
+                )
+                # Define o espaçamento entre os labels
+                label.grid(row=i, column=j, padx=2, pady=2)
+
+        # Cria botão para sair do jogo
+        self.botaoSair = Button(self.widget1, text="Sair", command=master.quit)
+        self.botaoSair.pack()
+
+
+root = Tk()
+root.title("Atividade prática 1 - IA")  # Define o título da janela
+root.geometry("800x600")  # Define o tamanho da janela
+Labirinto(root)
+root.mainloop()
