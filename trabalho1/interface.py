@@ -114,7 +114,7 @@ def animar_caminho(
             y * CELL_SIZE, x * CELL_SIZE, anchor=tk.NW, image=personagem_img
         )
         canvas.update()
-        time.sleep(1.0)
+        time.sleep(2.0)
 
     if personagem:
         canvas.delete(personagem)
@@ -125,7 +125,7 @@ def animar_caminho(
         image=personagem_img,
     )
     canvas.update()
-    time.sleep(0.4)
+    time.sleep(0.5)
 
     for i in range(1, len(caminho_final)):
         x0, y0 = caminho_final[i - 1]
@@ -146,7 +146,7 @@ def animar_caminho(
             y1 * CELL_SIZE, x1 * CELL_SIZE, anchor=tk.NW, image=personagem_img
         )
         canvas.update()
-        time.sleep(0.4)
+        time.sleep(0.5)
 
 
 def iniciar_interface():
