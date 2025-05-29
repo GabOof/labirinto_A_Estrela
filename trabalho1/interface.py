@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 
 CELL_SIZE = 100
 
+
 def carregar_matriz(arquivo):
     matriz = []
     with open(arquivo, "r") as f:
@@ -63,17 +64,23 @@ def animar_caminho(
             canvas.delete(m)
         marcador_fe.clear()
         for fx, fy, fe in passo["filhos"]:
-            cx = fy * CELL_SIZE + 10
-            cy = fx * CELL_SIZE + 50
+            cx = fy * CELL_SIZE + 30
+            cy = fx * CELL_SIZE + 70
 
-            # Fundo do texto
+            texto_explicativo = f"FE: {fe:.1f}"
+            largura_texto = len(texto_explicativo) * 6  # estimativa
             fundo = canvas.create_rectangle(
-                cx - 4, cy - 10, cx + 30, cy + 10, fill="#f0f0f0", outline=""
+                cx - 4,
+                cy - 12,
+                cx - 4 + largura_texto,
+                cy + 10,
+                fill="#f8f8f8",
+                outline="gray",
             )
             texto = canvas.create_text(
-                cx + 10,
+                cx + largura_texto // 2 - 4,
                 cy,
-                text=f"{fe:.1f}",
+                text=texto_explicativo,
                 fill="black",
                 font=("Helvetica", 10, "bold"),
             )
