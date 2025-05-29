@@ -1,5 +1,7 @@
 import tkinter as tk
 import time
+import os
+import sys
 from a_star import executar_busca
 from PIL import Image, ImageTk
 
@@ -157,7 +159,6 @@ def iniciar_interface():
     root.configure(bg="white")  # Fundo da janela
 
     imagens = carregar_imagens(root)
-    caminho, distancia, historico = executar_busca(matriz)
 
     canvas = tk.Canvas(
         root,
@@ -169,21 +170,28 @@ def iniciar_interface():
 
     objetos_canvas = desenhar_labirinto(canvas, matriz, imagens)
 
-    if caminho:
-        print(f"Caminho encontrado! Distância total: {distancia:.2f}")
-        print("Caminho:", caminho)
-        personagem_img = ImageTk.PhotoImage(
-            Image.open("img/personagem.png").resize((CELL_SIZE - 2, CELL_SIZE - 2)),
-            master=root,
-        )
-        root.after(
-            1000,
-            lambda: animar_caminho(
+    def iniciar_animacao():
+        caminho, distancia, historico = executar_busca(matriz)
+        canvas.delete("all")
+        nonlocal objetos_canvas
+        objetos_canvas = desenhar_labirinto(canvas, matriz, imagens)
+        if caminho:
+            print(f"Caminho encontrado! Distância total: {distancia:.2f}")
+            print("Caminho:", caminho)
+            personagem_img = ImageTk.PhotoImage(
+                Image.open("img/personagem.png").resize((CELL_SIZE - 2, CELL_SIZE - 2)),
+                master=root,
+            )
+            animar_caminho(
                 canvas, historico, caminho, personagem_img, matriz, objetos_canvas
-            ),
-        )
-    else:
-        print("Caminho não encontrado.")
+            )
+        else:
+            print("Caminho não encontrado.")
+
+    btn_reiniciar = tk.Button(root, text="Reiniciar", command=iniciar_animacao)
+    btn_reiniciar.pack(pady=10)
+
+    iniciar_animacao()
 
     root.mainloop()
 
