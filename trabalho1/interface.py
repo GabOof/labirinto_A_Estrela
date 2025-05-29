@@ -18,7 +18,9 @@ def carregar_imagens(master):
     letras = ["B", "F", "A", "C", "S"]
     imagens = {}
     for letra in letras:
-        img = Image.open(f"img/{letra}.png").resize((CELL_SIZE, CELL_SIZE))
+        img = Image.open(f"img/{letra}.png").resize(
+            (CELL_SIZE - 2, CELL_SIZE - 2)
+        )  # 2 pixels de margem
         imagens[letra] = ImageTk.PhotoImage(img, master=master)
     return imagens
 
@@ -30,20 +32,23 @@ def desenhar_labirinto(canvas, matriz, imagens):
         for j, celula in enumerate(linha):
             x = j * CELL_SIZE
             y = i * CELL_SIZE
-            if celula == "_":
-                rect = canvas.create_rectangle(
-                    x,
-                    y,
-                    x + CELL_SIZE,
-                    y + CELL_SIZE,
-                    fill="white",
-                    outline="lightgray",
+
+            # Desenha o quadrado de fundo com contorno mais escuro
+            canvas.create_rectangle(
+                x, y, x + CELL_SIZE, y + CELL_SIZE, fill="white", outline="gray30"
+            )
+
+            if celula in imagens:
+                img = imagens[celula]
+                item = canvas.create_image(
+                    x + 1,
+                    y + 1,
+                    anchor=tk.NW,
+                    image=img,  # leve deslocamento para caber dentro do quadrado
                 )
-                linha_obj.append(None)
-            else:
-                img = imagens.get(celula)
-                item = canvas.create_image(x, y, anchor=tk.NW, image=img)
                 linha_obj.append(item)
+            else:
+                linha_obj.append(None)
         objetos_canvas.append(linha_obj)
     return objetos_canvas
 
@@ -168,7 +173,8 @@ def iniciar_interface():
         print(f"Caminho encontrado! Distância total: {distancia:.2f}")
         print("Caminho:", caminho)
         personagem_img = ImageTk.PhotoImage(
-            Image.open("img/personagem.png").resize((CELL_SIZE, CELL_SIZE)), master=root
+            Image.open("img/personagem.png").resize((CELL_SIZE - 2, CELL_SIZE - 2)),
+            master=root,
         )
         root.after(
             1000,
