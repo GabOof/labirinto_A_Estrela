@@ -1,22 +1,23 @@
-import copy
 import math
 from tkinter import *
 
 
 class Node:
-    letra = ""
-    indiceX = -1
-    indiceY = -1
-    fe = -1
-    caminho = []
-    poder = 0
-    distancia_percorrida = 0
-    dist_linha_reta = 0
+    def __init__(self, x=-1, y=-1, letra="", poder=0):
+        self.indiceX = x
+        self.indiceY = y
+        self.letra = letra
+        self.poder = poder
+        self.fe = -1
+        self.caminho = []
+        self.distancia_percorrida = 0
+        self.dist_linha_reta = 0
 
     def __repr__(self):
-        return f"No: {self.indiceX},{self.indiceY}"
+        return f"No({self.indiceX},{self.indiceY}) FE={self.fe:.2f} Poder={self.poder}"
 
 
+# Labirinto inicial
 labirinto = [
     ["C", "_", "_", "_", "B", "_"],
     ["_", "B", "_", "_", "_", "_"],
@@ -26,59 +27,7 @@ labirinto = [
     ["_", "_", "_", "_", "_", "S"],
 ]
 
-
-def verifica_dist_percorrida(pai, filho):
-    if abs(filho.indiceX - pai.indiceX) == 1 and abs(filho.indiceY - pai.indiceY) == 1:
-        return math.sqrt(2)
-    else:
-        return 1
-
-
-def funcao_heuristica(filho, saida):
-    dist_linha_reta = math.sqrt(
-        (filho.indiceX - saida.indiceX) ** 2 + (filho.indiceY - saida.indiceY) ** 2
-    )
-    fe = filho.distancia_percorrida + dist_linha_reta
-    filho.dist_linha_reta = dist_linha_reta
-    return fe
-
-
-def validar_movimento(labirinto, filho, poder):
-    if 0 <= filho.indiceX < len(labirinto) and 0 <= filho.indiceY < len(labirinto[0]):
-        letra = labirinto[filho.indiceX][filho.indiceY]
-        if letra == "B" and poder == 0:
-            return False
-        return True
-    return False
-
-
-def get_menor(movimentos):
-    if len(movimentos) == 0:
-        return None
-    menor = movimentos[1]
-    indice_menor = 0
-    for i in range(1, len(movimentos)):
-        if movimentos[i].fe < menor.fe:
-            menor = movimentos[i]
-            indice_menor = i
-    del movimentos[indice_menor]
-    return menor
-
-
-inicio = Node()
-final = Node()
-for i in range(len(labirinto)):
-    for j in range(len(labirinto[0])):
-        if labirinto[i][j] == "C":
-            inicio.indiceX = i
-            inicio.indiceY = j
-            inicio.letra = "C"
-        if labirinto[i][j] == "S":
-            final.indiceX = i
-            final.indiceY = j
-            final.letra = "S"
-
-possiveis_direcoes = [
+direcoes = [
     (0, 1),
     (0, -1),
     (1, 0),
@@ -88,28 +37,78 @@ possiveis_direcoes = [
     (-1, 1),
     (-1, -1),
 ]
+
+
+def verifica_dist_percorrida(pai, filho):
+    # Diagonal = sqrt(2), reta = 1
+    if abs(filho.indiceX - pai.indiceX) == 1 and abs(filho.indiceY - pai.indiceY) == 1:
+        return math.sqrt(2)
+    return 1
+
+
+def funcao_heuristica(filho, saida):
+    dist_linha_reta = math.sqrt(
+        (filho.indiceX - saida.indiceX) ** 2 + (filho.indiceY - saida.indiceY) ** 2
+    )
+    filho.dist_linha_reta = dist_linha_reta
+    return filho.distancia_percorrida + dist_linha_reta
+
+
+def validar_movimento(lab, nodo, poder):
+    x, y = nodo.indiceX, nodo.indiceY
+    if 0 <= x < len(lab) and 0 <= y < len(lab[0]):
+        letra = lab[x][y]
+        if letra == "B" and poder == 0:
+            return False
+        return True
+    return False
+
+
+def get_menor(movs):
+    if not movs:
+        return None
+    menor = movs[0]
+    idx_menor = 0
+    for i, m in enumerate(movs):
+        if m.fe < menor.fe:
+            menor = m
+            idx_menor = i
+    return movs.pop(idx_menor)
+
+
+# Inicializa início e fim
+inicio = None
+final = None
+for i in range(len(labirinto)):
+    for j in range(len(labirinto[0])):
+        if labirinto[i][j] == "C":
+            inicio = Node(i, j, "C", poder=0)
+        elif labirinto[i][j] == "S":
+            final = Node(i, j, "S")
+
+# Variáveis do algoritmo A*
 movimentos = [inicio]
-visitados = []
+visitados = set()
 
+# Para animação
+passos = []  # registros das ações para animação (tipo, x, y, info)
+
+# Execução do A*
 while movimentos:
-    print(f"Inicio:{inicio}")
-    print(f"Final:{final}")
-
-    if (inicio.indiceX, inicio.indiceY, inicio.poder) in visitados:
-        inicio = get_menor(movimentos)
+    atual = get_menor(movimentos)
+    if (atual.indiceX, atual.indiceY, atual.poder) in visitados:
         continue
-    visitados.append((inicio.indiceX, inicio.indiceY, inicio.poder))
+    visitados.add((atual.indiceX, atual.indiceY, atual.poder))
+    passos.append(("visitado", atual.indiceX, atual.indiceY))
 
-    if inicio.indiceX == final.indiceX and inicio.indiceY == final.indiceY:
-        final = inicio
+    if atual.indiceX == final.indiceX and atual.indiceY == final.indiceY:
+        final = atual
         break
 
-    for direcao in possiveis_direcoes:
-        filho = Node()
-        filho.indiceX = inicio.indiceX + direcao[0]
-        filho.indiceY = inicio.indiceY + direcao[1]
-        filho.poder = inicio.poder
-        filho.caminho = inicio.caminho + [(inicio.indiceX, inicio.indiceY)]
+    filhos = []
+    for dx, dy in direcoes:
+        filho = Node(atual.indiceX + dx, atual.indiceY + dy, poder=atual.poder)
+        filho.caminho = atual.caminho + [(atual.indiceX, atual.indiceY)]
 
         if validar_movimento(labirinto, filho, filho.poder):
             filho.letra = labirinto[filho.indiceX][filho.indiceY]
@@ -117,91 +116,253 @@ while movimentos:
                 filho.poder = 1
             if filho.letra == "A":
                 filho.distancia_percorrida = (
-                    inicio.distancia_percorrida
-                    + verifica_dist_percorrida(inicio, filho)
+                    atual.distancia_percorrida
+                    + verifica_dist_percorrida(atual, filho)
                     + 1
                 )
             else:
                 filho.distancia_percorrida = (
-                    inicio.distancia_percorrida
-                    + verifica_dist_percorrida(inicio, filho)
+                    atual.distancia_percorrida + verifica_dist_percorrida(atual, filho)
                 )
-
             filho.fe = funcao_heuristica(filho, final)
-            movimentos.append(filho)
-            print(
-                f"Filho gerado: {filho} | FE: {filho.fe:.2f} | Dist: {filho.distancia_percorrida:.2f}"
-            )
+            filhos.append(filho)
+            passos.append(("gerado", filho.indiceX, filho.indiceY, filho.fe))
+    movimentos.extend(filhos)
 
-    inicio = get_menor(movimentos)
-    print(f"Menor: {inicio}")
-    print(f"Movimentos: {movimentos}")
-    print(f"Visitados: {visitados}")
-    print(f"Melhor FE: {inicio.fe}")
-    print("-" * 30)
-
-# Mostrar resultado final
-if final.indiceX != -1:
-    caminho_completo = final.caminho + [(final.indiceX, final.indiceY)]
-    print(f"Caminho encontrado!")
-    print(f"Distância total: {final.distancia_percorrida:.2f}")
-    print(f"Caminho: {caminho_completo}")
+if final.indiceX == -1:
+    print("Caminho não encontrado")
 else:
-    print("Caminho não encontrado.")
+    caminho_completo = final.caminho + [(final.indiceX, final.indiceY)]
+    print("Caminho encontrado:", caminho_completo)
 
 
-# Classe responsável pela interface visual utilizando o tkinter
-# (https://www.devmedia.com.br/tkinter-interfaces-graficas-em-python/33956)
-# (https://www-codingal-com.translate.goog/coding-for-kids/blog/build-gui-games-in-python/?_x_tr_sl=en&_x_tr_tl=pt&_x_tr_hl=pt&_x_tr_pto=tc)
-# (https://github.com/OtavianoSilva/minesweeper_python)
+# Interface minimalista e funcional
+class LabirintoGUI:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Labirinto A* - Minimalista")
+        self.master.geometry("700x600")
+        self.lab_frame = Frame(master)
+        self.lab_frame.pack(pady=10)
 
-
-class Labirinto:
-    def __init__(self, master=None):
-        # Cria o frame principal para o título
-        self.widget1 = Frame(master)
-        self.widget1.pack()
-        # Escreve o título
-        self.titulo = Label(self.widget1, text="Execução do Jogo")
-        self.titulo.pack()
-
-        # Cria labirinto de acordo com a lista do labirinto definida anteriormente
-        self.labirinto = Frame(master)
-        self.labirinto.pack()
-        cores = {
-            "C": "#A8E6CF",  # Começo
-            "S": "#FF8B94",  # Saída
-            "A": "#AECBFA",  # Semi-barreira
-            "F": "#FFFACD",  # Poder
-            "B": "#6A6A6A",  # Barreira
-            "_": "#FFFFFF",  # Caminho livre
+        # Cores base
+        self.cores = {
+            "C": "#A8E6CF",
+            "S": "#FF8B94",
+            "A": "#AECBFA",
+            "F": "#FFFACD",
+            "B": "#6A6A6A",
+            "_": "#FFFFFF",
         }
+        self.labels = {}
 
-        for i, quadrado in enumerate(labirinto):
-            for j, quadrado in enumerate(quadrado):
-                cor = cores.get(quadrado, "white")  # Define a cor padrão como branco
-
-                # Cria o label para cada quadrado do labirinto
-                label = Label(
-                    self.labirinto,
-                    text=(
-                        " " if quadrado == "_" else quadrado
-                    ),  # Mostra espaço em branco para "_",
-                    fg="black",  # Cor do texto
-                    width=8,
-                    height=4,
+        # Criação dos labels para o labirinto
+        for i, row in enumerate(labirinto):
+            for j, val in enumerate(row):
+                cor = self.cores.get(val, "white")
+                lbl = Label(
+                    self.lab_frame,
+                    text=val if val != "_" else " ",
+                    width=4,
+                    height=2,
                     bg=cor,
+                    font=("Consolas", 16, "bold"),
+                    relief="ridge",
+                    borderwidth=1,
                 )
-                # Define o espaçamento entre os labels
-                label.grid(row=i, column=j, padx=2, pady=2)
+                lbl.grid(row=i, column=j)
+                self.labels[(i, j)] = lbl
 
-        # Cria botão para sair do jogo
-        self.botaoSair = Button(self.widget1, text="Sair", command=master.quit)
-        self.botaoSair.pack()
+        # Informações do estado
+        self.info_frame = Frame(master)
+        self.info_frame.pack(pady=5, fill=X)
+
+        self.status_label = Label(
+            self.info_frame, text="Status do algoritmo:", font=("Arial", 14)
+        )
+        self.status_label.pack(anchor="w")
+
+        self.pos_label = Label(
+            self.info_frame, text="Posição atual: -", font=("Arial", 12)
+        )
+        self.pos_label.pack(anchor="w")
+
+        self.fe_label = Label(self.info_frame, text="FE atual: -", font=("Arial", 12))
+        self.fe_label.pack(anchor="w")
+
+        self.poder_label = Label(
+            self.info_frame, text="Poder ativo: 0", font=("Arial", 12)
+        )
+        self.poder_label.pack(anchor="w")
+
+        self.movimentos_label = Label(
+            self.info_frame, text="Próximos movimentos (FE): -", font=("Arial", 12)
+        )
+        self.movimentos_label.pack(anchor="w")
+
+        self.caminho_label = Label(
+            self.info_frame, text="Caminho até agora: -", font=("Arial", 12)
+        )
+        self.caminho_label.pack(anchor="w")
+
+        # Botão para iniciar animação
+        self.btn_start = Button(
+            master, text="Iniciar Animação", command=self.iniciar_animacao
+        )
+        self.btn_start.pack(pady=10)
+
+        self.animacao_passos = passos.copy()
+        self.movimentos_atuais = []
+        self.personagem_pos = None
+        self.animando_caminho = False
+
+    def iniciar_animacao(self):
+        self.movimentos = [inicio]
+        self.visitados = set()
+        self.personagem_pos = (inicio.indiceX, inicio.indiceY)
+        self.atual = inicio
+        self.movimentos_atuais = []
+        self.animando_caminho = False
+        self._animar_proximo_passo()
+
+    def _animar_proximo_passo(self):
+        if self.animando_caminho:
+            self._animar_caminho_completo()
+            return
+
+        if not self.movimentos:
+            # Quando acabar os movimentos, anima o caminho final
+            self.animando_caminho = True
+            self._animar_caminho_completo()
+            return
+
+        # Escolhe menor nó FE
+        atual = get_menor(self.movimentos)
+        if (atual.indiceX, atual.indiceY, atual.poder) in self.visitados:
+            self.master.after(300, self._animar_proximo_passo)
+            return
+
+        self.visitados.add((atual.indiceX, atual.indiceY, atual.poder))
+        self.atual = atual
+        self.personagem_pos = (atual.indiceX, atual.indiceY)
+
+        # Atualiza visual do personagem
+        self._atualiza_visual_labirinto(atual)
+
+        # Atualiza infos na tela
+        self.pos_label.config(
+            text=f"Posição atual: ({atual.indiceX}, {atual.indiceY}) [{labirinto[atual.indiceX][atual.indiceY]}]"
+        )
+        self.fe_label.config(text=f"FE atual: {atual.fe:.2f}")
+        self.poder_label.config(text=f"Poder ativo: {atual.poder}")
+
+        # Gera filhos e adiciona movimentos
+        filhos = []
+        filhos_texto = []
+        for dx, dy in direcoes:
+            filho = Node(atual.indiceX + dx, atual.indiceY + dy, poder=atual.poder)
+            filho.caminho = atual.caminho + [(atual.indiceX, atual.indiceY)]
+
+            if validar_movimento(labirinto, filho, filho.poder):
+                filho.letra = labirinto[filho.indiceX][filho.indiceY]
+                if filho.letra == "F":
+                    filho.poder = 1
+                if filho.letra == "A":
+                    filho.distancia_percorrida = (
+                        atual.distancia_percorrida
+                        + verifica_dist_percorrida(atual, filho)
+                        + 1
+                    )
+                else:
+                    filho.distancia_percorrida = (
+                        atual.distancia_percorrida
+                        + verifica_dist_percorrida(atual, filho)
+                    )
+                filho.fe = funcao_heuristica(filho, final)
+                filhos.append(filho)
+                filhos_texto.append(
+                    f"({filho.indiceX},{filho.indiceY}): FE={filho.fe:.2f}"
+                )
+
+        self.movimentos.extend(filhos)
+        self.movimentos_atuais = filhos_texto
+        self.movimentos_label.config(
+            text=(
+                "Próximos movimentos (FE): " + ", ".join(filhos_texto)
+                if filhos_texto
+                else "Nenhum"
+            )
+        )
+
+        # Atualiza caminho até aqui
+        caminho_txt = " -> ".join(
+            [f"({x},{y})" for x, y in atual.caminho + [(atual.indiceX, atual.indiceY)]]
+        )
+        self.caminho_label.config(text=f"Caminho até agora: {caminho_txt}")
+
+        if atual.indiceX == final.indiceX and atual.indiceY == final.indiceY:
+            # Encontrou saída, anima caminho final
+            self.animando_caminho = True
+            self.caminho_final = atual.caminho + [(atual.indiceX, atual.indiceY)]
+            self.master.after(600, self._animar_caminho_completo)
+        else:
+            self.master.after(600, self._animar_proximo_passo)
+
+    def _atualiza_visual_labirinto(self, atual):
+        # Resetar cores padrões
+        for (i, j), lbl in self.labels.items():
+            val = labirinto[i][j]
+            cor = self.cores.get(val, "white")
+            lbl.config(bg=cor, text=val if val != "_" else " ")
+
+        # Destacar visitados
+        for x, y, p in self.visitados:
+            if (x, y) != (atual.indiceX, atual.indiceY):
+                self.labels[(x, y)].config(bg="#D3D3D3")  # cinza claro
+
+        # Destacar personagem atual
+        self.labels[(atual.indiceX, atual.indiceY)].config(bg="#3399FF", text="😃")
+
+    def _animar_caminho_completo(self):
+        if not hasattr(self, "caminho_final") or not self.caminho_final:
+            return
+        if not hasattr(self, "idx_caminho"):
+            self.idx_caminho = 0
+
+        if self.idx_caminho >= len(self.caminho_final):
+            self.status_label.config(text="Status do algoritmo: Caminho encontrado!")
+            self.idx_caminho = 0
+            return
+
+        x, y = self.caminho_final[self.idx_caminho]
+
+        # Reset cores
+        for (i, j), lbl in self.labels.items():
+            val = labirinto[i][j]
+            cor = self.cores.get(val, "white")
+            lbl.config(bg=cor, text=val if val != "_" else " ")
+
+        # Destacar caminho final
+        for pos in self.caminho_final:
+            self.labels[pos].config(bg="#7FFF00")  # verde limão
+
+        # Destacar personagem no caminho
+        self.labels[(x, y)].config(bg="#3399FF", text="😃")
+
+        self.pos_label.config(text=f"Posição atual: ({x}, {y}) - Caminho final")
+        self.fe_label.config(text=f"Distância total: {final.distancia_percorrida:.2f}")
+        self.poder_label.config(
+            text=f"Poder ativo: {'Sim' if any(labirinto[i][j]=='F' for i,j in self.caminho_final) else 'Não'}"
+        )
+        self.movimentos_label.config(text="Próximos movimentos (FE): -")
+        self.caminho_label.config(
+            text=f"Caminho completo: {' -> '.join(str(p) for p in self.caminho_final)}"
+        )
+
+        self.idx_caminho += 1
+        self.master.after(500, self._animar_caminho_completo)
 
 
 root = Tk()
-root.title("Atividade prática 1 - IA")  # Define o título da janela
-root.geometry("800x600")  # Define o tamanho da janela
-Labirinto(root)
+LabirintoGUI(root)
 root.mainloop()
