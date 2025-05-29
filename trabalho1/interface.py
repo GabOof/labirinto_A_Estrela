@@ -1,7 +1,5 @@
 import tkinter as tk
 import time
-import os
-import sys
 from a_star import executar_busca
 from PIL import Image, ImageTk
 
