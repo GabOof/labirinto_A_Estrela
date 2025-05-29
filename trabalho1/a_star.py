@@ -14,11 +14,12 @@ class Node:
         self.dist_linha_reta = 0  # Heurística (h)
 
     def __repr__(self):
+        # Debug
         return f"No: {self.indiceX},{self.indiceY}"
 
 
 def verifica_dist_percorrida(pai, filho):
-    # Custo do movimento: 1 (vertical ou horizontal: 1 quadradinho) ou sqrt(2) (diagonal: 2 quadradinhos)
+    # Verifica se o movimento entre pai e filho é diagonal (custo raiz(2)) ou reto (custo 1)
     if abs(filho.indiceX - pai.indiceX) == 1 and abs(filho.indiceY - pai.indiceY) == 1:
         return math.sqrt(2)
     else:
@@ -26,7 +27,9 @@ def verifica_dist_percorrida(pai, filho):
 
 
 def funcao_heuristica(filho, saida):
-    # f = custo acumulado + heurística (distância em linha reta)
+    # Calcula a função f = g + h, onde:
+    # g = distância percorrida (custo do caminho até aqui)
+    # h = distância em linha reta até o objetivo (heurística)
     dist_linha_reta = math.sqrt(
         (filho.indiceX - saida.indiceX) ** 2 + (filho.indiceY - saida.indiceY) ** 2
     )
@@ -40,9 +43,9 @@ def validar_movimento(labirinto, filho, poder):
     if 0 <= filho.indiceX < len(labirinto) and 0 <= filho.indiceY < len(labirinto[0]):
         letra = labirinto[filho.indiceX][filho.indiceY]
         if letra == "B" and poder == 0:
-            return False
-        return True
-    return False
+            return False  # Não pode passar por bloqueio sem poder
+        return True  # Movimento válido
+    return False  # Fora dos limites do labirinto
 
 
 def get_menor(movimentos):
@@ -60,10 +63,11 @@ def get_menor(movimentos):
 
 
 def executar_busca(labirinto):
+    # Função principal que executa a busca A* no labirinto
     inicio = Node()
     final = Node()
 
-    # Encontra início ('C') e fim ('S') no labirinto
+    # Encontra início e fim no labirinto
     for i in range(len(labirinto)):
         for j in range(len(labirinto[0])):
             if labirinto[i][j] == "C":
@@ -75,6 +79,7 @@ def executar_busca(labirinto):
                 final.indiceY = j
                 final.letra = "S"
 
+    # Possíveis direções de movimento (8 direções: vertical, horizontal e diagonal)
     possiveis_direcoes = [
         (0, 1),
         (0, -1),
@@ -85,36 +90,48 @@ def executar_busca(labirinto):
         (-1, 1),
         (-1, -1),
     ]
+
+    # Lista de nós a serem explorados
     movimentos = [inicio]
+
+    # Lista para guardar nós já visitados
     visitados = []
+
+    # Histórico do caminho e das decisões tomadas
     historico_passos = []
 
     while movimentos:
         # Evita revisitar estados já explorados (posição + poder)
         if (inicio.indiceX, inicio.indiceY, inicio.poder) in visitados:
-            inicio = get_menor(movimentos)
+            inicio = get_menor(
+                movimentos
+            )  # Seleciona próximo nó com menor custo estimado
             continue
 
         visitados.append((inicio.indiceX, inicio.indiceY, inicio.poder))
 
+        # Estado atual para registro no histórico
         estado_atual = {
             "pos": (inicio.indiceX, inicio.indiceY),
-            "filhos": [],
+            "filhos": [],  # filhos gerados neste estado
             "fe": inicio.fe,
         }
 
-        # Verifica se chegou no destino
+        # Chegou no destino? Termina busca
         if inicio.indiceX == final.indiceX and inicio.indiceY == final.indiceY:
             final = inicio
             historico_passos.append(estado_atual)
             break
 
+        # Explora todas as direções possíveis para gerar filhos
         for direcao in possiveis_direcoes:
             filho = Node()
             filho.indiceX = inicio.indiceX + direcao[0]
             filho.indiceY = inicio.indiceY + direcao[1]
-            filho.poder = inicio.poder
-            filho.caminho = inicio.caminho + [(inicio.indiceX, inicio.indiceY)]
+            filho.poder = inicio.poder  # Herda o poder do pai
+            filho.caminho = inicio.caminho + [
+                (inicio.indiceX, inicio.indiceY)
+            ]  # Atualiza caminho
 
             if validar_movimento(labirinto, filho, filho.poder):
                 filho.letra = labirinto[filho.indiceX][filho.indiceY]
@@ -136,16 +153,23 @@ def executar_busca(labirinto):
                         + verifica_dist_percorrida(inicio, filho)
                     )
 
+                # Calcula custo total estimado com a heurística
                 filho.fe = funcao_heuristica(filho, final)
 
+                # Adiciona filho na lista de movimentos a explorar
                 movimentos.append(filho)
                 estado_atual["filhos"].append((filho.indiceX, filho.indiceY, filho.fe))
 
+        # Adiciona estado atual no histórico
         historico_passos.append(estado_atual)
+
+        # Seleciona próximo nó com menor custo estimado para explorar
         inicio = get_menor(movimentos)
 
+    # Se encontrou caminho, retorna lista de posições e custo total
     if final.indiceX != -1:
         caminho_completo = final.caminho + [(final.indiceX, final.indiceY)]
         return caminho_completo, final.distancia_percorrida, historico_passos
     else:
+        # Sem caminho encontrado
         return None, None, historico_passos
