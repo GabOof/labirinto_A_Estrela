@@ -13,29 +13,6 @@ Este projeto demonstra a implementação do algoritmo de busca A*, um algoritmo 
 - **Terrenos com custo (A)**: Áreas que aumentam o custo de movimento
 - **Movimento em 8 direções**: Horizontal, vertical e diagonal
 
-## 🎮 Componentes
-
-### Arquivos Principais
-
-1. **`a_star.py`** - Implementação do algoritmo A*
-   - Classe `Node`: Representa cada nó no espaço de busca
-   - `executar_busca()`: Função principal que executa a busca
-   - `funcao_heuristica()`: Cálculo da função f = g + h
-   - `validar_movimento()`: Verifica movimentos válidos
-   - `get_menor()`: Seleciona nó com menor valor de f
-
-2. **`interface.py`** - Interface gráfica com Tkinter
-   - Visualização do labirinto
-   - Animação do caminho encontrado
-   - Exibição de valores de heurística (FE)
-   - Simulação de coleta de poderes e destruição de barreiras
-
-3. **`labirinto.txt`** - Arquivo de definição do labirinto
-   - Formato: matriz de caracteres separados por espaços
-   - Símbolos suportados: C, S, B, F, A, _
-
-4. **`labirintosTeste.txt`** - Labirintos adicionais para testes
-
 ## 🗺️ Símbolos do Labirinto
 
 | Símbolo | Descrição | Efeito |
@@ -98,17 +75,6 @@ Usa **distância euclidiana** do nó atual até o objetivo:
 h(n) = √[(x_atual - x_objetivo)² + (y_atual - y_objetivo)²]
 ```
 
-## 🎯 Funcionalidades
-
-- ✅ Busca otimizada com A*
-- ✅ Visualização gráfica em tempo real
-- ✅ Animação suave do caminho percorrido
-- ✅ Exibição de valores de heurística (FE) durante a busca
-- ✅ Tratamento de objetos especiais (frutas, barreiras)
-- ✅ Registro de histórico de decisões
-- ✅ Botão "Reiniciar" para nova execução
-- ✅ Suporte a múltiplos labirintos
-
 ## 📊 Saída
 
 Após a execução, o programa exibe no console:
@@ -126,39 +92,8 @@ O projeto requer imagens PNG na pasta `img/`:
 - `A.png` - Ícone de área de risco
 - `personagem.png` - Ícone do personagem/agente
 
-## 📁 Estrutura do Projeto
-
-```
-labirinto_A_Estrela/
-├── README.md
-├── a_star.py              # Implementação do A*
-├── interface.py           # Interface gráfica
-├── labirinto.txt          # Labirinto padrão
-├── labirintosTeste.txt    # Labirintos para teste
-├── img/                   # Pasta com imagens
-│   ├── C.png
-│   ├── S.png
-│   ├── B.png
-│   ├── F.png
-│   ├── A.png
-│   └── personagem.png
-└── __pycache__/           # Cache Python
-```
-
 ## 🔬 Complexidade
 
 - **Complexidade de Tempo**: O(b^d) onde b é o fator de ramificação e d é a profundidade
 - **Complexidade de Espaço**: O(b^d)
 - **Admissibilidade**: Garantida com heurística admissível (distância euclidiana)
-
-## 📝 Autor
-
-Trabalho prático desenvolvido como atividade da disciplina de Inteligência Artificial.
-
-## 📄 Licença
-
-Este projeto é fornecido como material educacional.
-
----
-
-**Dica**: Para entender melhor o funcionamento do A*, modifique `time.sleep()` em `interface.py` para acelerar/desacelerar a animação!
